@@ -51,12 +51,9 @@
     
     CGFloat progress = MIN(self.progress, 1.0f - FLT_EPSILON);
     CGFloat radians = 0;
-    if (clockwise)
-    {
+    if (clockwise) {
         radians = (float)((progress * 2.0f * M_PI) - M_PI_2);
-    }
-    else
-    {
+    } else {
         radians = (float)(3 * M_PI_2 - (progress * 2.0f * M_PI));
     }
     
@@ -166,10 +163,12 @@
 
 - (void)didMoveToWindow
 {
+    [super didMoveToWindow];
     CGFloat windowContentsScale = self.window.screen.scale;
     self.circularProgressLayer.contentsScale = windowContentsScale;
     [self.circularProgressLayer setNeedsDisplay];
 }
+
 
 #pragma mark - Progress
 
@@ -192,13 +191,25 @@
            animated:(BOOL)animated
        initialDelay:(CFTimeInterval)initialDelay
 {
+    CGFloat pinnedProgress = MIN(MAX(progress, 0.0f), 1.0f);
+    [self setProgress:progress
+             animated:animated
+         initialDelay:initialDelay
+         withDuration:fabs(self.progress - pinnedProgress)];
+}
+
+- (void)setProgress:(CGFloat)progress
+           animated:(BOOL)animated
+       initialDelay:(CFTimeInterval)initialDelay
+       withDuration:(CFTimeInterval)duration
+{
     [self.layer removeAnimationForKey:@"indeterminateAnimation"];
     [self.circularProgressLayer removeAnimationForKey:@"progress"];
     
     CGFloat pinnedProgress = MIN(MAX(progress, 0.0f), 1.0f);
     if (animated) {
         CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"progress"];
-        animation.duration = fabs(self.progress - pinnedProgress); // Same duration as UIProgressView animation
+        animation.duration = duration;
         animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
         animation.fillMode = kCAFillModeForwards;
         animation.fromValue = [NSNumber numberWithFloat:self.progress];
@@ -217,6 +228,7 @@
    NSNumber *pinnedProgressNumber = [animation valueForKey:@"toValue"];
    self.circularProgressLayer.progress = [pinnedProgressNumber floatValue];
 }
+
 
 #pragma mark - UIAppearance methods
 
